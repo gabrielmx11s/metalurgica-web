@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import api from "../../services/api";
+import "./Login.css";
 
 function Login() {
   const [pin, setPin] = useState("");
@@ -12,7 +13,6 @@ function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     setErro("");
 
     if (!/^\d{4}$/.test(pin)) {
@@ -28,6 +28,7 @@ function Login() {
       });
 
       localStorage.setItem("token", response.data.token);
+
       localStorage.setItem(
         "funcionario",
         JSON.stringify({
@@ -51,33 +52,45 @@ function Login() {
   }
 
   return (
-    <main>
-      <h1>Sistema de Apontamentos</h1>
-      <p>Entre com o PIN do funcionário.</p>
+    <main className="login-page">
+      <section className="login-card">
+        <header className="login-header">
+          <h1>TORNESUL</h1>
+          <h2>Sistema de Apontamentos</h2>
+          <p>Digite o PIN do funcionário para acessar.</p>
+        </header>
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="pin">PIN</label>
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label htmlFor="pin">PIN</label>
 
-        <input
-          id="pin"
-          type="password"
-          inputMode="numeric"
-          maxLength={4}
-          value={pin}
-          onChange={(event) => {
-            const somenteNumeros = event.target.value.replace(/\D/g, "");
-            setPin(somenteNumeros);
-          }}
-          placeholder="Digite 4 números"
-          autoComplete="off"
-        />
+          <input
+            id="pin"
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            value={pin}
+            onChange={(event) => {
+              const somenteNumeros =
+                event.target.value.replace(/\D/g, "");
 
-        {erro && <p>{erro}</p>}
+              setPin(somenteNumeros);
+            }}
+            placeholder="••••"
+            autoComplete="off"
+            autoFocus
+          />
 
-        <button type="submit" disabled={carregando}>
-          {carregando ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+          {erro && <p className="login-error">{erro}</p>}
+
+          <button
+            className="login-button"
+            type="submit"
+            disabled={carregando}
+          >
+            {carregando ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+      </section>
     </main>
   );
 }

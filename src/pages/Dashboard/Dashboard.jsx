@@ -1,38 +1,167 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+import api from "../../services/api";
+import "./Dashboard.css";
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const [indicadores, setIndicadores] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
-  const funcionarioSalvo = localStorage.getItem("funcionario");
+  useEffect(() => {
+    carregarIndicadores();
+  }, []);
 
-  const funcionario = funcionarioSalvo
-    ? JSON.parse(funcionarioSalvo)
-    : null;
+  async function carregarIndicadores() {
+    try {
+      setCarregando(true);
+      setErro("");
 
-  function handleSair() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("funcionario");
+      const response = await api.get(
+        "/dashboard/indicadores-hoje"
+      );
 
-    navigate("/login");
+      setIndicadores(response.data);
+    } catch (error) {
+      console.error(
+        "Erro ao carregar o dashboard:",
+        error
+      );
+
+      if (error.response?.status === 401) {
+        setErro(
+          "Sua sessão expirou. Saia do sistema e entre novamente."
+        );
+      } else {
+        setErro(
+          error.response?.data?.erro ||
+            "Não foi possível carregar os indicadores."
+        );
+      }
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  if (carregando) {
+    return (
+      <section className="dashboard-page">
+        <p className="dashboard-status">
+          Carregando indicadores...
+        </p>
+      </section>
+    );
   }
 
   return (
-    <main>
-      <h1>Dashboard</h1>
+    <section className="dashboard-page">
+      <header className="dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>
+            Visão geral dos apontamentos de hoje.
+          </p>
+        </div>
 
-      {funcionario ? (
-        <>
-          <p>Bem-vindo, {funcionario.nome}.</p>
-          <p>Cargo: {funcionario.cargo || "Não informado"}</p>
-        </>
-      ) : (
-        <p>Funcionário não identificado.</p>
+        <button
+          type="button"
+          className="dashboard-refresh"
+          onClick={carregarIndicadores}
+        >
+          Atualizar
+        </button>
+      </header>
+
+      {erro && (
+        <div className="dashboard-error">
+          {erro}
+        </div>
       )}
 
-      <button type="button" onClick={handleSair}>
-        Sair
-      </button>
-    </main>
+      {indicadores && (
+        <>
+          <div className="dashboard-grid">
+            <article className="dashboard-card">
+              <span>Iniciados hoje</span>
+              <strong>
+                {indicadores.apontamentosIniciadosHoje ?? 0}
+              </strong>
+            </article>
+
+            <article className="dashboard-card">
+              <span>Finalizados hoje</span>
+              <strong>
+                {indicadores.apontamentosFinalizadosHoje ?? 0}
+              </strong>
+            </article>
+
+            <article className="dashboard-card">
+              <span>Em andamento</span>
+              <strong>
+                {indicadores.apontamentosEmAndamento ?? 0}
+              </strong>
+            </article>
+
+            <article className="dashboard-card">
+              <span>Pausados</span>
+              <strong>
+                {indicadores.apontamentosPausados ?? 0}
+              </strong>
+            </article>
+
+            <article className="dashboard-card dashboard-card-wide">
+              <span>Tempo produtivo hoje</span>
+              <strong>
+                {indicadores.tempoProdutivoFormatado ||
+                  "00:00:00"}
+              </strong>
+            </article>
+
+            <article className="dashboard-card dashboard-card-wide">
+              <span>Tempo pausado hoje</span>
+              <strong>
+                {indicadores.tempoPausadoFormatado ||
+                  "00:00:00"}
+              </strong>
+            </article>
+
+            <article className="dashboard-card dashboard-card-wide">
+              <span>
+                Média por apontamento finalizado
+              </span>
+              <strong>
+                {indicadores.mediaTempoFormatada ||
+                  "00:00:00"}
+              </strong>
+            </article>
+          </div>
+
+          <div className="dashboard-highlights">
+            <article className="highlight-card">
+              <span>
+                Máquina com maior tempo produtivo
+              </span>
+
+              <strong>
+                {indicadores.maquinaComMaiorTempoProdutivo ||
+                  "Nenhuma máquina"}
+              </strong>
+            </article>
+
+            <article className="highlight-card">
+              <span>
+                Operador com maior tempo produtivo
+              </span>
+
+              <strong>
+                {indicadores.operadorComMaiorTempoProdutivo ||
+                  "Nenhum operador"}
+              </strong>
+            </article>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
