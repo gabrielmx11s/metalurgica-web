@@ -1,0 +1,114 @@
+.apontamentos-page {
+  width: 100%;
+}
+
+.apontamentos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.apontamentos-header h1 {
+  color: #1f1f1f;
+  font-size: 2rem;
+}
+
+.apontamentos-header p {
+  margin-top: 6px;
+  color: #666666;
+}
+
+.apontamentos-header button {
+  padding: 11px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #b51f2e;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.apontamentos-header button:hover {
+  background: #921823;
+}
+
+.tabela-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.apontamentos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.apontamentos-table th,
+.apontamentos-table td {
+  padding: 15px 18px;
+  border-bottom: 1px solid #eeeeee;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.apontamentos-table th {
+  background: #202020;
+  color: #ffffff;
+}
+
+.apontamentos-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-em_andamento {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pausado {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-finalizado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.apontamentos-error {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fde8e8;
+  color: #b42318;
+}
+
+.apontamentos-vazio,
+.apontamentos-mensagem {
+  padding: 28px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #666666;
+  text-align: center;
+}
+
+@media (max-width: 650px) {
+  .apontamentos-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .apontamentos-header button {
+    width: 100%;
+  }
+}
