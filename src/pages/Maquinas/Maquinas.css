@@ -1,8 +1,8 @@
-.funcionarios-page {
+.maquinas-page {
   width: 100%;
 }
 
-.funcionarios-header {
+.maquinas-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,66 +10,47 @@
   margin-bottom: 24px;
 }
 
-.funcionarios-header h1 {
+.maquinas-header h1 {
   color: #1f1f1f;
   font-size: 2rem;
 }
 
-.funcionarios-header p {
+.maquinas-header p {
   margin-top: 6px;
   color: #666666;
 }
 
-.funcionarios-table-container {
+.maquinas-table-container {
   overflow-x: auto;
   border-radius: 12px;
   background: #ffffff;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
-.funcionarios-table {
+.maquinas-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.funcionarios-table th,
-.funcionarios-table td {
+.maquinas-table th,
+.maquinas-table td {
   padding: 15px 18px;
   border-bottom: 1px solid #eeeeee;
   text-align: left;
   white-space: nowrap;
 }
 
-.funcionarios-table th {
+.maquinas-table th {
   background: #202020;
   color: #ffffff;
 }
 
-.funcionarios-table tbody tr:hover {
+.maquinas-table tbody tr:hover {
   background: #fafafa;
 }
 
-.status-active,
-.status-inactive {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.status-active {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.status-inactive {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.funcionarios-message,
-.funcionarios-empty {
+.maquinas-message,
+.maquinas-empty {
   padding: 28px;
   border-radius: 12px;
   background: #ffffff;
@@ -77,14 +58,14 @@
   text-align: center;
 }
 
-.funcionarios-error {
+.maquinas-error {
   padding: 14px 16px;
   border-radius: 8px;
   background: #fde8e8;
   color: #b42318;
 }
 
-.funcionarios-success {
+.maquinas-success {
   margin-bottom: 20px;
   padding: 14px 16px;
   border-radius: 8px;
@@ -92,7 +73,7 @@
   color: #166534;
 }
 
-.funcionarios-modal-overlay {
+.maquinas-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -103,7 +84,7 @@
   background: rgba(0, 0, 0, 0.55);
 }
 
-.funcionarios-modal {
+.maquinas-modal {
   width: 100%;
   max-width: 500px;
   padding: 28px;
@@ -112,7 +93,7 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.funcionarios-modal-header {
+.maquinas-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -120,16 +101,16 @@
   margin-bottom: 24px;
 }
 
-.funcionarios-modal-header h2 {
+.maquinas-modal-header h2 {
   color: #202020;
 }
 
-.funcionarios-modal-header p {
+.maquinas-modal-header p {
   margin-top: 5px;
   color: #666666;
 }
 
-.funcionarios-close-button {
+.maquinas-close-button {
   border: none;
   background: transparent;
   color: #666666;
@@ -137,24 +118,24 @@
   cursor: pointer;
 }
 
-.funcionarios-form {
+.maquinas-form {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.funcionarios-field {
+.maquinas-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.funcionarios-field label {
+.maquinas-field label {
   color: #333333;
   font-weight: 700;
 }
 
-.funcionarios-field input {
+.maquinas-field input {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid #cccccc;
@@ -163,30 +144,24 @@
   font-size: 1rem;
 }
 
-.funcionarios-field input:focus {
+.maquinas-field input:focus {
   border-color: #b51f2e;
   box-shadow: 0 0 0 3px rgba(181, 31, 46, 0.12);
 }
 
-.funcionarios-field-help {
-  color: #777777;
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-.funcionarios-checkbox {
+.maquinas-checkbox {
   display: flex;
   align-items: center;
   gap: 10px;
   color: #333333;
 }
 
-.funcionarios-checkbox input {
+.maquinas-checkbox input {
   width: 18px;
   height: 18px;
 }
 
-.funcionarios-form-actions {
+.maquinas-form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -194,24 +169,24 @@
 }
 
 @media (max-width: 650px) {
-  .funcionarios-header {
+  .maquinas-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .funcionarios-header .btn {
+  .maquinas-header .btn {
     width: 100%;
   }
 
-  .funcionarios-modal {
+  .maquinas-modal {
     padding: 22px;
   }
 
-  .funcionarios-form-actions {
+  .maquinas-form-actions {
     flex-direction: column;
   }
 
-  .funcionarios-form-actions .btn {
+  .maquinas-form-actions .btn {
     width: 100%;
   }
 }

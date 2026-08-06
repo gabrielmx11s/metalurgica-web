@@ -3,21 +3,32 @@ import { useEffect, useState } from "react";
 import api from "../../services/api";
 import "./Funcionarios.css";
 
+const formularioInicial = {
+  nome: "",
+  cargo: "",
+  pin: "",
+  ativo: true,
+};
+
 function Funcionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+
   const [mostrarFormulario, setMostrarFormulario] =
     useState(false);
 
-  const [formulario, setFormulario] = useState({
-    nome: "",
-    cargo: "",
-    pin: "",
-    ativo: true,
-  });
+  const [modoFormulario, setModoFormulario] =
+    useState("cadastrar");
+
+  const [funcionarioEditandoId, setFuncionarioEditandoId] =
+    useState(null);
+
+  const [formulario, setFormulario] =
+    useState(formularioInicial);
 
   useEffect(() => {
     carregarFuncionarios();
@@ -32,10 +43,15 @@ function Funcionarios() {
 
       setFuncionarios(response.data);
     } catch (error) {
-      console.error("Erro ao carregar funcionários:", error);
+      console.error(
+        "Erro ao carregar funcionários:",
+        error
+      );
 
       if (error.response?.status === 401) {
-        setErro("Sua sessão expirou. Entre novamente.");
+        setErro(
+          "Sua sessão expirou. Entre novamente."
+        );
       } else {
         setErro(
           error.response?.data?.erro ||
@@ -47,12 +63,25 @@ function Funcionarios() {
     }
   }
 
-  function abrirFormulario() {
+  function abrirCadastro() {
+    setModoFormulario("cadastrar");
+    setFuncionarioEditandoId(null);
+    setFormulario(formularioInicial);
+
+    setErro("");
+    setSucesso("");
+    setMostrarFormulario(true);
+  }
+
+  function abrirEdicao(funcionario) {
+    setModoFormulario("editar");
+    setFuncionarioEditandoId(funcionario.id);
+
     setFormulario({
-      nome: "",
-      cargo: "",
+      nome: funcionario.nome || "",
+      cargo: funcionario.cargo || "",
       pin: "",
-      ativo: true,
+      ativo: funcionario.ativo ?? true,
     });
 
     setErro("");
@@ -66,55 +95,113 @@ function Funcionarios() {
     }
 
     setMostrarFormulario(false);
+    setFuncionarioEditandoId(null);
+    setFormulario(formularioInicial);
+    setErro("");
   }
 
   function atualizarCampo(event) {
-    const { name, value, type, checked } = event.target;
+    const { name, value, type, checked } =
+      event.target;
 
     setFormulario((formularioAtual) => ({
       ...formularioAtual,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
     }));
   }
 
-  async function cadastrarFuncionario(event) {
+  function atualizarPin(event) {
+    const somenteNumeros =
+      event.target.value.replace(/\D/g, "");
+
+    setFormulario((formularioAtual) => ({
+      ...formularioAtual,
+      pin: somenteNumeros,
+    }));
+  }
+
+  function validarFormulario() {
+    if (!formulario.nome.trim()) {
+      setErro(
+        "O nome do funcionário é obrigatório."
+      );
+
+      return false;
+    }
+
+    if (!/^\d{4}$/.test(formulario.pin)) {
+      setErro(
+        "O PIN deve conter exatamente 4 números."
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  async function salvarFuncionario(event) {
     event.preventDefault();
 
     setErro("");
     setSucesso("");
 
-    if (!formulario.nome.trim()) {
-      setErro("O nome do funcionário é obrigatório.");
+    if (!validarFormulario()) {
       return;
     }
 
-    if (!/^\d{4}$/.test(formulario.pin)) {
-      setErro("O PIN deve conter exatamente 4 números.");
-      return;
-    }
+    const dados = {
+      nome: formulario.nome.trim(),
+      cargo: formulario.cargo.trim() || null,
+      pin: formulario.pin,
+      ativo: formulario.ativo,
+    };
 
     try {
       setSalvando(true);
 
-      await api.post("/funcionarios", {
-        nome: formulario.nome.trim(),
-        cargo: formulario.cargo.trim() || null,
-        pin: formulario.pin,
-        ativo: formulario.ativo,
-      });
+      if (modoFormulario === "editar") {
+        await api.put(
+          `/funcionarios/${funcionarioEditandoId}`,
+          dados
+        );
 
-      setSucesso("Funcionário cadastrado com sucesso.");
+        setSucesso(
+          "Funcionário atualizado com sucesso."
+        );
+      } else {
+        await api.post("/funcionarios", dados);
+
+        setSucesso(
+          "Funcionário cadastrado com sucesso."
+        );
+      }
+
       setMostrarFormulario(false);
+      setFuncionarioEditandoId(null);
+      setFormulario(formularioInicial);
 
       await carregarFuncionarios();
     } catch (error) {
-      console.error("Erro ao cadastrar funcionário:", error);
-
-      setErro(
-        error.response?.data?.erro ||
-          error.response?.data?.mensagem ||
-          "Não foi possível cadastrar o funcionário."
+      console.error(
+        "Erro ao salvar funcionário:",
+        error
       );
+
+      if (error.response?.status === 401) {
+        setErro(
+          "Sua sessão expirou. Entre novamente."
+        );
+      } else {
+        setErro(
+          error.response?.data?.erro ||
+            error.response?.data?.mensagem ||
+            "Não foi possível salvar o funcionário."
+        );
+      }
     } finally {
       setSalvando(false);
     }
@@ -125,13 +212,17 @@ function Funcionarios() {
       <header className="funcionarios-header">
         <div>
           <h1>Funcionários</h1>
-          <p>Gerencie os funcionários cadastrados no sistema.</p>
+
+          <p>
+            Gerencie os funcionários cadastrados
+            no sistema.
+          </p>
         </div>
 
         <button
           type="button"
-          className="funcionarios-new-button"
-          onClick={abrirFormulario}
+          className="btn btn-primary"
+          onClick={abrirCadastro}
         >
           + Novo funcionário
         </button>
@@ -154,8 +245,17 @@ function Funcionarios() {
           <section className="funcionarios-modal">
             <header className="funcionarios-modal-header">
               <div>
-                <h2>Novo funcionário</h2>
-                <p>Preencha os dados para cadastrar.</p>
+                <h2>
+                  {modoFormulario === "editar"
+                    ? "Editar funcionário"
+                    : "Novo funcionário"}
+                </h2>
+
+                <p>
+                  {modoFormulario === "editar"
+                    ? "Atualize os dados do funcionário."
+                    : "Preencha os dados para cadastrar."}
+                </p>
               </div>
 
               <button
@@ -163,6 +263,7 @@ function Funcionarios() {
                 className="funcionarios-close-button"
                 onClick={fecharFormulario}
                 disabled={salvando}
+                aria-label="Fechar formulário"
               >
                 ×
               </button>
@@ -170,10 +271,12 @@ function Funcionarios() {
 
             <form
               className="funcionarios-form"
-              onSubmit={cadastrarFuncionario}
+              onSubmit={salvarFuncionario}
             >
               <div className="funcionarios-field">
-                <label htmlFor="nome">Nome</label>
+                <label htmlFor="nome">
+                  Nome
+                </label>
 
                 <input
                   id="nome"
@@ -188,7 +291,9 @@ function Funcionarios() {
               </div>
 
               <div className="funcionarios-field">
-                <label htmlFor="cargo">Cargo</label>
+                <label htmlFor="cargo">
+                  Cargo
+                </label>
 
                 <input
                   id="cargo"
@@ -202,7 +307,9 @@ function Funcionarios() {
               </div>
 
               <div className="funcionarios-field">
-                <label htmlFor="pin">PIN</label>
+                <label htmlFor="pin">
+                  PIN
+                </label>
 
                 <input
                   id="pin"
@@ -211,18 +318,17 @@ function Funcionarios() {
                   inputMode="numeric"
                   maxLength={4}
                   value={formulario.pin}
-                  onChange={(event) => {
-                    const somenteNumeros =
-                      event.target.value.replace(/\D/g, "");
-
-                    setFormulario((formularioAtual) => ({
-                      ...formularioAtual,
-                      pin: somenteNumeros,
-                    }));
-                  }}
-                  placeholder="4 números"
+                  onChange={atualizarPin}
+                  placeholder="Digite 4 números"
                   autoComplete="off"
                 />
+
+                {modoFormulario === "editar" && (
+                  <small className="funcionarios-field-help">
+                    Digite novamente o PIN atual ou
+                    informe um novo PIN.
+                  </small>
+                )}
               </div>
 
               <label className="funcionarios-checkbox">
@@ -233,7 +339,9 @@ function Funcionarios() {
                   onChange={atualizarCampo}
                 />
 
-                <span>Funcionário ativo</span>
+                <span>
+                  Funcionário ativo
+                </span>
               </label>
 
               {erro && (
@@ -245,7 +353,7 @@ function Funcionarios() {
               <div className="funcionarios-form-actions">
                 <button
                   type="button"
-                  className="funcionarios-cancel-button"
+                  className="btn btn-secondary"
                   onClick={fecharFormulario}
                   disabled={salvando}
                 >
@@ -254,10 +362,14 @@ function Funcionarios() {
 
                 <button
                   type="submit"
-                  className="funcionarios-save-button"
+                  className="btn btn-primary"
                   disabled={salvando}
                 >
-                  {salvando ? "Salvando..." : "Cadastrar"}
+                  {salvando
+                    ? "Salvando..."
+                    : modoFormulario === "editar"
+                      ? "Salvar alterações"
+                      : "Cadastrar"}
                 </button>
               </div>
             </form>
@@ -279,47 +391,68 @@ function Funcionarios() {
           </div>
         )}
 
-      {!carregando && funcionarios.length > 0 && (
-        <div className="funcionarios-table-container">
-          <table className="funcionarios-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Cargo</th>
-                <th>PIN</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {funcionarios.map((funcionario) => (
-                <tr key={funcionario.id}>
-                  <td>{funcionario.id}</td>
-                  <td>{funcionario.nome}</td>
-                  <td>
-                    {funcionario.cargo || "Não informado"}
-                  </td>
-                  <td>••••</td>
-                  <td>
-                    <span
-                      className={
-                        funcionario.ativo
-                          ? "status-active"
-                          : "status-inactive"
-                      }
-                    >
-                      {funcionario.ativo
-                        ? "Ativo"
-                        : "Inativo"}
-                    </span>
-                  </td>
+      {!carregando &&
+        funcionarios.length > 0 && (
+          <div className="funcionarios-table-container">
+            <table className="funcionarios-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Cargo</th>
+                  <th>PIN</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+
+              <tbody>
+                {funcionarios.map(
+                  (funcionario) => (
+                    <tr key={funcionario.id}>
+                      <td>{funcionario.id}</td>
+
+                      <td>{funcionario.nome}</td>
+
+                      <td>
+                        {funcionario.cargo ||
+                          "Não informado"}
+                      </td>
+
+                      <td>••••</td>
+
+                      <td>
+                        <span
+                          className={
+                            funcionario.ativo
+                              ? "status-active"
+                              : "status-inactive"
+                          }
+                        >
+                          {funcionario.ativo
+                            ? "Ativo"
+                            : "Inativo"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-small"
+                          onClick={() =>
+                            abrirEdicao(funcionario)
+                          }
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
     </section>
   );
 }
