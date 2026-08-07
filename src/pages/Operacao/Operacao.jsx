@@ -7,8 +7,14 @@ function Operacao() {
   const [apontamento, setApontamento] =
     useState(null);
 
+  const [producoes, setProducoes] =
+    useState([]);
+
   const [maquinas, setMaquinas] =
     useState([]);
+
+  const [producaoId, setProducaoId] =
+    useState("");
 
   const [numeroMaquina, setNumeroMaquina] =
     useState("");
@@ -22,16 +28,33 @@ function Operacao() {
   const [modalAberto, setModalAberto] =
     useState(false);
 
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+  const [erro, setErro] =
+    useState("");
+
+  const [sucesso, setSucesso] =
+    useState("");
 
   useEffect(() => {
     carregarDados();
   }, []);
 
+  const producoesAbertas =
+    producoes.filter(
+      (producao) =>
+        producao.status === "ABERTA"
+    );
+
+  const producoesAguardando =
+    producoes.filter(
+      (producao) =>
+        producao.status ===
+        "AGUARDANDO_CONTINUIDADE"
+    );
+
   async function carregarDados() {
     await Promise.all([
       carregarApontamentoAtual(),
+      carregarProducoes(),
       carregarMaquinas(),
     ]);
   }
@@ -66,18 +89,36 @@ function Operacao() {
     }
   }
 
+  async function carregarProducoes() {
+    try {
+      const response =
+        await api.get("/producoes");
+
+      setProducoes(
+        response.data
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao carregar produções:",
+        error
+      );
+    }
+  }
+
   async function carregarMaquinas() {
     try {
-      const response = await api.get(
-        "/maquinas"
-      );
+      const response =
+        await api.get("/maquinas");
 
       const maquinasAtivas =
         response.data.filter(
-          (maquina) => maquina.ativo
+          (maquina) =>
+            maquina.ativo
         );
 
-      setMaquinas(maquinasAtivas);
+      setMaquinas(
+        maquinasAtivas
+      );
     } catch (error) {
       console.error(
         "Erro ao carregar máquinas:",
@@ -87,10 +128,14 @@ function Operacao() {
   }
 
   function abrirModal() {
+    setProducaoId("");
     setNumeroMaquina("");
     setErro("");
     setSucesso("");
     setModalAberto(true);
+
+    carregarProducoes();
+    carregarMaquinas();
   }
 
   function fecharModal() {
@@ -99,12 +144,23 @@ function Operacao() {
     }
 
     setModalAberto(false);
+    setProducaoId("");
     setNumeroMaquina("");
     setErro("");
   }
 
-  async function iniciarApontamento(event) {
+  async function iniciarApontamento(
+    event
+  ) {
     event.preventDefault();
+
+    if (!producaoId) {
+      setErro(
+        "Selecione uma produção."
+      );
+
+      return;
+    }
 
     if (!numeroMaquina) {
       setErro(
@@ -122,45 +178,56 @@ function Operacao() {
       await api.post(
         "/apontamentos/iniciar",
         {
+          producaoId:
+            Number(producaoId),
+
           numeroMaquina,
         }
       );
 
       setModalAberto(false);
+      setProducaoId("");
       setNumeroMaquina("");
 
       setSucesso(
-        "Apontamento iniciado com sucesso."
+        "Produção iniciada com sucesso."
       );
 
-      await carregarApontamentoAtual();
+      await carregarDados();
     } catch (error) {
       console.error(
-        "Erro ao iniciar apontamento:",
+        "Erro ao iniciar produção:",
         error
       );
 
       tratarErro(
         error,
-        "Não foi possível iniciar o apontamento."
+        "Não foi possível iniciar a produção."
       );
     } finally {
       setProcessando(false);
     }
   }
 
-  async function executarAcao(acao) {
-    if (!apontamento?.id || processando) {
+  async function executarAcao(
+    acao
+  ) {
+    if (
+      !apontamento?.id ||
+      processando
+    ) {
       return;
     }
 
     const mensagens = {
       pausar:
         "Apontamento pausado com sucesso.",
+
       retomar:
         "Apontamento retomado com sucesso.",
+
       finalizar:
-        "Apontamento finalizado com sucesso.",
+        "Produção finalizada com sucesso.",
     };
 
     try {
@@ -172,9 +239,11 @@ function Operacao() {
         `/apontamentos/${apontamento.id}/${acao}`
       );
 
-      setSucesso(mensagens[acao]);
+      setSucesso(
+        mensagens[acao]
+      );
 
-      await carregarApontamentoAtual();
+      await carregarDados();
     } catch (error) {
       console.error(
         `Erro ao ${acao}:`,
@@ -190,11 +259,89 @@ function Operacao() {
     }
   }
 
+  async function encerrarPeriodo() {
+    if (
+      !apontamento?.id ||
+      processando
+    ) {
+      return;
+    }
+
+    try {
+      setProcessando(true);
+      setErro("");
+      setSucesso("");
+
+      await api.put(
+        `/apontamentos/${apontamento.id}/encerrar-periodo`
+      );
+
+      setSucesso(
+        "Seu período foi encerrado. A produção continua disponível para outro operador."
+      );
+
+      await carregarDados();
+    } catch (error) {
+      console.error(
+        "Erro ao encerrar período:",
+        error
+      );
+
+      tratarErro(
+        error,
+        "Não foi possível encerrar o período."
+      );
+    } finally {
+      setProcessando(false);
+    }
+  }
+
+  async function assumirProducao(
+    producaoIdParaAssumir
+  ) {
+    if (
+      !producaoIdParaAssumir ||
+      processando
+    ) {
+      return;
+    }
+
+    try {
+      setProcessando(true);
+      setErro("");
+      setSucesso("");
+
+      await api.post(
+        `/apontamentos/producoes/${producaoIdParaAssumir}/assumir`
+      );
+
+      setSucesso(
+        "Produção assumida com sucesso."
+      );
+
+      await carregarDados();
+    } catch (error) {
+      console.error(
+        "Erro ao assumir produção:",
+        error
+      );
+
+      tratarErro(
+        error,
+        "Não foi possível assumir a produção."
+      );
+    } finally {
+      setProcessando(false);
+    }
+  }
+
   function tratarErro(
     error,
     mensagemPadrao
   ) {
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401
+    ) {
       setErro(
         "Sua sessão expirou. Entre novamente."
       );
@@ -208,22 +355,31 @@ function Operacao() {
     );
   }
 
-  function formatarData(dataHora) {
+  function formatarData(
+    dataHora
+  ) {
     if (!dataHora) {
       return "-";
     }
 
     return new Date(
       dataHora
-    ).toLocaleString("pt-BR");
+    ).toLocaleString(
+      "pt-BR"
+    );
   }
 
-  function formatarStatus(status) {
+  function formatarStatus(
+    status
+  ) {
     if (!status) {
       return "-";
     }
 
-    return status.replaceAll("_", " ");
+    return status.replaceAll(
+      "_",
+      " "
+    );
   }
 
   if (carregando) {
@@ -243,18 +399,20 @@ function Operacao() {
       <div className="operacao-card">
         <header className="operacao-header">
           <div>
-            <h1>Operação</h1>
+            <h1>
+              Operação
+            </h1>
 
             <p>
-              Controle do apontamento de
-              produção.
+              Controle do apontamento
+              de produção.
             </p>
           </div>
 
           <button
             type="button"
             className="btn btn-outline btn-small"
-            onClick={carregarApontamentoAtual}
+            onClick={carregarDados}
             disabled={processando}
           >
             Atualizar
@@ -267,34 +425,38 @@ function Operacao() {
           </div>
         )}
 
-        {erro && !modalAberto && (
-          <div className="operacao-error">
-            {erro}
-          </div>
-        )}
-
-        {!apontamento && !erro && (
-          <div className="operacao-sem-apontamento">
-            <div className="operacao-empty-icon">
-              ▶
+        {erro &&
+          !modalAberto && (
+            <div className="operacao-error">
+              {erro}
             </div>
+          )}
 
-            <h2>Nenhum trabalho ativo</h2>
+        {!apontamento &&
+          !erro && (
+            <div className="operacao-sem-apontamento">
+              <div className="operacao-empty-icon">
+                ▶
+              </div>
 
-            <p>
-              Você não possui apontamento em
-              andamento ou pausado.
-            </p>
+              <h2>
+                Nenhum trabalho ativo
+              </h2>
 
-            <button
-              type="button"
-              className="btn btn-primary operacao-start-button"
-              onClick={abrirModal}
-            >
-              Iniciar apontamento
-            </button>
-          </div>
-        )}
+              <p>
+                Você não possui produção
+                em andamento ou pausada.
+              </p>
+
+              <button
+                type="button"
+                className="btn btn-primary operacao-start-button"
+                onClick={abrirModal}
+              >
+                Iniciar produção
+              </button>
+            </div>
+          )}
 
         {apontamento && (
           <>
@@ -311,31 +473,101 @@ function Operacao() {
                   apontamento.status
                 )}
               </span>
+
+              {apontamento.status ===
+                "PAUSADO" && (
+                <button
+                  type="button"
+                  className="btn btn-outline operacao-nova-producao-button"
+                  onClick={abrirModal}
+                  disabled={processando}
+                >
+                  + Iniciar outra produção
+                </button>
+              )}
             </div>
 
             <div className="operacao-info-grid">
               <article className="operacao-info-card">
-                <span>Funcionário</span>
+                <span>
+                  Funcionário
+                </span>
 
                 <strong>
-                  {apontamento.funcionarioNome ||
+                  {apontamento
+                    .funcionarioNome ||
                     "-"}
                 </strong>
               </article>
 
               <article className="operacao-info-card">
-                <span>Máquina</span>
+                <span>
+                  Máquina
+                </span>
 
                 <strong>
-                  {apontamento.maquinaNumero &&
-                  apontamento.maquinaNome
+                  {apontamento
+                    .maquinaNumero &&
+                  apontamento
+                    .maquinaNome
                     ? `${apontamento.maquinaNumero} - ${apontamento.maquinaNome}`
                     : "-"}
                 </strong>
               </article>
 
               <article className="operacao-info-card">
-                <span>Início</span>
+                <span>
+                  Ordem de Produção
+                </span>
+
+                <strong>
+                  {apontamento
+                    .numeroOp ||
+                    "Sem OP vinculada"}
+                </strong>
+              </article>
+
+              <article className="operacao-info-card">
+                <span>
+                  Empresa
+                </span>
+
+                <strong>
+                  {apontamento
+                    .empresa ||
+                    "-"}
+                </strong>
+              </article>
+
+              <article className="operacao-info-card">
+                <span>
+                  Desenho
+                </span>
+
+                <strong>
+                  {apontamento
+                    .desenho ||
+                    "-"}
+                </strong>
+              </article>
+
+              <article className="operacao-info-card">
+                <span>
+                  Quantidade
+                </span>
+
+                <strong>
+                  {apontamento
+                    .quantidade
+                    ? `${apontamento.quantidade} peça(s)`
+                    : "-"}
+                </strong>
+              </article>
+
+              <article className="operacao-info-card">
+                <span>
+                  Início
+                </span>
 
                 <strong>
                   {formatarData(
@@ -345,7 +577,9 @@ function Operacao() {
               </article>
 
               <article className="operacao-info-card">
-                <span>ID do apontamento</span>
+                <span>
+                  ID do apontamento
+                </span>
 
                 <strong>
                   #{apontamento.id}
@@ -355,84 +589,221 @@ function Operacao() {
 
             {apontamento.status ===
               "PAUSADO" && (
-              <div className="operacao-pausa-info">
-                <span>Pausado desde</span>
+                <div className="operacao-pausa-info">
+                  <span>
+                    Pausado desde
+                  </span>
 
-                <strong>
-                  {formatarData(
-                    apontamento.inicioPausa
-                  )}
-                </strong>
-              </div>
-            )}
+                  <strong>
+                    {formatarData(
+                      apontamento
+                        .inicioPausa
+                    )}
+                  </strong>
+                </div>
+              )}
 
             <div className="operacao-actions">
               {apontamento.status ===
                 "EM_ANDAMENTO" && (
-                <button
-                  type="button"
-                  className="btn operacao-pause-button"
-                  onClick={() =>
-                    executarAcao("pausar")
-                  }
-                  disabled={processando}
-                >
-                  {processando
-                    ? "Processando..."
-                    : "Pausar"}
-                </button>
-              )}
+                  <button
+                    type="button"
+                    className="btn operacao-pause-button"
+                    onClick={() =>
+                      executarAcao(
+                        "pausar"
+                      )
+                    }
+                    disabled={
+                      processando
+                    }
+                  >
+                    {processando
+                      ? "Processando..."
+                      : "Pausar"}
+                  </button>
+                )}
 
               {apontamento.status ===
                 "PAUSADO" && (
-                <button
-                  type="button"
-                  className="btn operacao-resume-button"
-                  onClick={() =>
-                    executarAcao("retomar")
-                  }
-                  disabled={processando}
-                >
-                  {processando
-                    ? "Processando..."
-                    : "Retomar"}
-                </button>
-              )}
+                  <button
+                    type="button"
+                    className="btn operacao-resume-button"
+                    onClick={() =>
+                      executarAcao(
+                        "retomar"
+                      )
+                    }
+                    disabled={
+                      processando
+                    }
+                  >
+                    {processando
+                      ? "Processando..."
+                      : "Retomar"}
+                  </button>
+                )}
+
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={
+                  encerrarPeriodo
+                }
+                disabled={
+                  processando
+                }
+              >
+                {processando
+                  ? "Processando..."
+                  : "Encerrar período"}
+              </button>
 
               <button
                 type="button"
                 className="btn btn-danger"
                 onClick={() =>
-                  executarAcao("finalizar")
+                  executarAcao(
+                    "finalizar"
+                  )
                 }
-                disabled={processando}
+                disabled={
+                  processando
+                }
               >
                 {processando
                   ? "Processando..."
-                  : "Finalizar"}
+                  : "Finalizar produção"}
               </button>
             </div>
           </>
         )}
       </div>
 
+      {/*
+        Produções aguardando continuidade.
+
+        Não mostramos essa área enquanto existe
+        um apontamento EM_ANDAMENTO, pois o
+        funcionário já está trabalhando.
+      */}
+      {apontamento?.status !==
+        "EM_ANDAMENTO" &&
+        producoesAguardando.length >
+          0 && (
+          <div className="operacao-continuidades">
+            <div className="operacao-continuidades-header">
+              <div>
+                <h2>
+                  Produções aguardando
+                  continuidade
+                </h2>
+
+                <p>
+                  Se uma dessas produções
+                  estiver sendo continuada por
+                  você, basta assumir.
+                </p>
+              </div>
+            </div>
+
+            <div className="operacao-continuidades-list">
+              {producoesAguardando.map(
+                (producao) => (
+                  <article
+                    key={producao.id}
+                    className="operacao-continuidade-card"
+                  >
+                    <div className="operacao-continuidade-info">
+                      <div>
+                        <span>
+                          OP
+                        </span>
+
+                        <strong>
+                          {producao.numeroOp}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
+                          Empresa
+                        </span>
+
+                        <strong>
+                          {producao.empresa}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
+                          Desenho
+                        </span>
+
+                        <strong>
+                          {producao.desenho}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
+                          Quantidade
+                        </span>
+
+                        <strong>
+                          {producao.quantidade}
+                          {" peça(s)"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary operacao-assumir-button"
+                      onClick={() =>
+                        assumirProducao(
+                          producao.id
+                        )
+                      }
+                      disabled={
+                        processando
+                      }
+                    >
+                      {processando
+                        ? "Assumindo..."
+                        : "Assumir produção"}
+                    </button>
+                  </article>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
       {modalAberto && (
         <div className="operacao-modal-overlay">
           <section className="operacao-modal">
             <header className="operacao-modal-header">
               <div>
-                <h2>Novo apontamento</h2>
+                <h2>
+                  Iniciar produção
+                </h2>
 
                 <p>
-                  Selecione a máquina para iniciar.
+                  Selecione uma produção
+                  nova e a máquina.
                 </p>
               </div>
 
               <button
                 type="button"
                 className="operacao-modal-close"
-                onClick={fecharModal}
-                disabled={processando}
+                onClick={
+                  fecharModal
+                }
+                disabled={
+                  processando
+                }
                 aria-label="Fechar modal"
               >
                 ×
@@ -440,36 +811,118 @@ function Operacao() {
             </header>
 
             <form
-              onSubmit={iniciarApontamento}
+              onSubmit={
+                iniciarApontamento
+              }
             >
               <div className="operacao-field">
-                <label htmlFor="numeroMaquina">
-                  Máquina
+                <label
+                  htmlFor="producaoId"
+                >
+                  Produção
                 </label>
 
                 <select
-                  id="numeroMaquina"
-                  value={numeroMaquina}
+                  id="producaoId"
+                  value={
+                    producaoId
+                  }
                   onChange={(event) =>
-                    setNumeroMaquina(
+                    setProducaoId(
                       event.target.value
                     )
                   }
                   autoFocus
                 >
                   <option value="">
-                    Selecione uma máquina
+                    Selecione uma
+                    produção
                   </option>
 
-                  {maquinas.map((maquina) => (
-                    <option
-                      key={maquina.id}
-                      value={maquina.numero}
-                    >
-                      {maquina.numero} -{" "}
-                      {maquina.nome}
-                    </option>
-                  ))}
+                  {producoesAbertas.map(
+                    (producao) => (
+                      <option
+                        key={
+                          producao.id
+                        }
+                        value={
+                          producao.id
+                        }
+                      >
+                        OP{" "}
+                        {
+                          producao.numeroOp
+                        }
+                        {" | "}
+                        {
+                          producao.empresa
+                        }
+                        {" | "}
+                        {
+                          producao.desenho
+                        }
+                        {" | "}
+                        {
+                          producao.quantidade
+                        }
+                        {" peça(s)"}
+                      </option>
+                    )
+                  )}
+                </select>
+
+                {producoesAbertas.length ===
+                  0 && (
+                  <small>
+                    Não existem produções
+                    novas disponíveis.
+                  </small>
+                )}
+              </div>
+
+              <div className="operacao-field">
+                <label
+                  htmlFor="numeroMaquina"
+                >
+                  Máquina
+                </label>
+
+                <select
+                  id="numeroMaquina"
+                  value={
+                    numeroMaquina
+                  }
+                  onChange={(event) =>
+                    setNumeroMaquina(
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    Selecione uma
+                    máquina
+                  </option>
+
+                  {maquinas.map(
+                    (maquina) => (
+                      <option
+                        key={
+                          maquina.id
+                        }
+                        value={
+                          maquina.numero
+                        }
+                      >
+                        {
+                          maquina.numero
+                        }
+                        {" - "}
+                        {
+                          maquina.nome
+                        }
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
@@ -483,8 +936,12 @@ function Operacao() {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={fecharModal}
-                  disabled={processando}
+                  onClick={
+                    fecharModal
+                  }
+                  disabled={
+                    processando
+                  }
                 >
                   Cancelar
                 </button>
@@ -492,7 +949,11 @@ function Operacao() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={processando}
+                  disabled={
+                    processando ||
+                    producoesAbertas.length ===
+                      0
+                  }
                 >
                   {processando
                     ? "Iniciando..."

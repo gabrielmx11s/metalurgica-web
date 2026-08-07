@@ -12,6 +12,7 @@ import Funcionarios from "../pages/Funcionarios/Funcionarios";
 import Login from "../pages/Login/Login";
 import Maquinas from "../pages/Maquinas/Maquinas";
 import Operacao from "../pages/Operacao/Operacao";
+import Producoes from "../pages/Producoes/Producoes";
 
 function RotaProtegida({ children }) {
   const token = localStorage.getItem("token");
@@ -63,6 +64,12 @@ function AppRoutes() {
             path="/operacao"
             element={<Operacao />}
           />
+
+          <Route
+            path="/producoes"
+            element={<Producoes />}
+         />
+         
         </Route>
 
         <Route

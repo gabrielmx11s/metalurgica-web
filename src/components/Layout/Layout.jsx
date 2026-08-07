@@ -54,6 +54,15 @@ function Layout() {
             Máquinas
           </NavLink>
 
+          <NavLink 
+            to="/producoes"
+            className={({ isActive }) =>
+              isActive ? "menu-link active" : "menu-link"
+            }
+            >
+           Produções
+           </NavLink>
+
           <NavLink
             to="/apontamentos"
             className={({ isActive }) =>
