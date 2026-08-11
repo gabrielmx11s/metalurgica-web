@@ -5,7 +5,8 @@ import "./Layout.css";
 function Layout() {
   const navigate = useNavigate();
 
-  const funcionarioSalvo = localStorage.getItem("funcionario");
+  const funcionarioSalvo =
+    localStorage.getItem("funcionario");
 
   const funcionario = funcionarioSalvo
     ? JSON.parse(funcionarioSalvo)
@@ -18,68 +19,84 @@ function Layout() {
     navigate("/login");
   }
 
+  function classeMenu({ isActive }) {
+    return isActive
+      ? "menu-link active"
+      : "menu-link";
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-brand">
           <h1>TORNESUL</h1>
-          <span>Sistema de Apontamentos</span>
+
+          <span>
+            Sistema de Apontamentos
+          </span>
         </div>
 
         <nav className="sidebar-menu">
           <NavLink
             to="/dashboard"
-            className={({ isActive }) =>
-              isActive ? "menu-link active" : "menu-link"
-            }
+            className={classeMenu}
           >
             Dashboard
           </NavLink>
 
           <NavLink
             to="/funcionarios"
-            className={({ isActive }) =>
-              isActive ? "menu-link active" : "menu-link"
-            }
+            className={classeMenu}
           >
             Funcionários
           </NavLink>
 
           <NavLink
             to="/maquinas"
-            className={({ isActive }) =>
-              isActive ? "menu-link active" : "menu-link"
-            }
+            className={classeMenu}
           >
             Máquinas
           </NavLink>
 
-          <NavLink 
+          <NavLink
             to="/producoes"
-            className={({ isActive }) =>
-              isActive ? "menu-link active" : "menu-link"
-            }
-            >
-           Produções
-           </NavLink>
+            className={classeMenu}
+          >
+            Produções
+          </NavLink>
 
           <NavLink
             to="/apontamentos"
-            className={({ isActive }) =>
-              isActive ? "menu-link active" : "menu-link"
-            }
+            className={classeMenu}
           >
             Apontamentos
+          </NavLink>
+
+          <NavLink
+            to="/horarios"
+            className={classeMenu}
+          >
+            Horários
           </NavLink>
         </nav>
 
         <div className="sidebar-footer">
           <div>
-            <strong>{funcionario?.nome || "Funcionário"}</strong>
-            <span>{funcionario?.cargo || "Cargo não informado"}</span>
+            <strong>
+              {funcionario?.nome ||
+                "Funcionário"}
+            </strong>
+
+            <span>
+              {funcionario?.cargo ||
+                "Cargo não informado"}
+            </span>
           </div>
 
-          <button type="button" onClick={handleSair}>
+          <button
+            type="button"
+            onClick={handleSair}
+          >
             Sair
           </button>
         </div>
