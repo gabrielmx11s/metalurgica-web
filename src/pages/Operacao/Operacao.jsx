@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import api from "../../services/api";
 import "./Operacao.css";
 
 function Operacao() {
+  const navigate = useNavigate();
+
   const [apontamento, setApontamento] =
     useState(null);
 
@@ -94,9 +97,7 @@ function Operacao() {
       const response =
         await api.get("/producoes");
 
-      setProducoes(
-        response.data
-      );
+      setProducoes(response.data);
     } catch (error) {
       console.error(
         "Erro ao carregar produções:",
@@ -125,6 +126,23 @@ function Operacao() {
         error
       );
     }
+  }
+
+  function handleSair() {
+    localStorage.removeItem(
+      "token"
+    );
+
+    localStorage.removeItem(
+      "funcionario"
+    );
+
+    navigate(
+      "/login",
+      {
+        replace: true,
+      }
+    );
   }
 
   function abrirModal() {
@@ -397,25 +415,42 @@ function Operacao() {
   return (
     <section className="operacao-page">
       <div className="operacao-card">
-        <header className="operacao-header">
-          <div>
-            <h1>
-              Operação
-            </h1>
 
-            <p>
-              Controle do apontamento
-              de produção.
-            </p>
+        <header className="operacao-header">
+          <div className="operacao-header-main">
+            <div>
+              <h1>
+                Operação
+              </h1>
+
+              <p>
+                Controle do apontamento
+                de produção.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-small"
+              onClick={
+                carregarDados
+              }
+              disabled={
+                processando
+              }
+            >
+              Atualizar
+            </button>
           </div>
 
           <button
             type="button"
-            className="btn btn-outline btn-small"
-            onClick={carregarDados}
-            disabled={processando}
+            className="operacao-logout-button"
+            onClick={
+              handleSair
+            }
           >
-            Atualizar
+            Sair
           </button>
         </header>
 
@@ -435,6 +470,7 @@ function Operacao() {
         {!apontamento &&
           !erro && (
             <div className="operacao-sem-apontamento">
+
               <div className="operacao-empty-icon">
                 ▶
               </div>
@@ -451,7 +487,9 @@ function Operacao() {
               <button
                 type="button"
                 className="btn btn-primary operacao-start-button"
-                onClick={abrirModal}
+                onClick={
+                  abrirModal
+                }
               >
                 Iniciar produção
               </button>
@@ -479,8 +517,12 @@ function Operacao() {
                 <button
                   type="button"
                   className="btn btn-outline operacao-nova-producao-button"
-                  onClick={abrirModal}
-                  disabled={processando}
+                  onClick={
+                    abrirModal
+                  }
+                  disabled={
+                    processando
+                  }
                 >
                   + Iniciar outra produção
                 </button>
@@ -488,6 +530,7 @@ function Operacao() {
             </div>
 
             <div className="operacao-info-grid">
+
               <article className="operacao-info-card">
                 <span>
                   Funcionário
@@ -585,6 +628,7 @@ function Operacao() {
                   #{apontamento.id}
                 </strong>
               </article>
+
             </div>
 
             {apontamento.status ===
@@ -604,45 +648,46 @@ function Operacao() {
               )}
 
             <div className="operacao-actions">
+
               {apontamento.status ===
                 "EM_ANDAMENTO" && (
-                  <button
-                    type="button"
-                    className="btn operacao-pause-button"
-                    onClick={() =>
-                      executarAcao(
-                        "pausar"
-                      )
-                    }
-                    disabled={
-                      processando
-                    }
-                  >
-                    {processando
-                      ? "Processando..."
-                      : "Pausar"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="btn operacao-pause-button"
+                  onClick={() =>
+                    executarAcao(
+                      "pausar"
+                    )
+                  }
+                  disabled={
+                    processando
+                  }
+                >
+                  {processando
+                    ? "Processando..."
+                    : "Pausar"}
+                </button>
+              )}
 
               {apontamento.status ===
                 "PAUSADO" && (
-                  <button
-                    type="button"
-                    className="btn operacao-resume-button"
-                    onClick={() =>
-                      executarAcao(
-                        "retomar"
-                      )
-                    }
-                    disabled={
-                      processando
-                    }
-                  >
-                    {processando
-                      ? "Processando..."
-                      : "Retomar"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="btn operacao-resume-button"
+                  onClick={() =>
+                    executarAcao(
+                      "retomar"
+                    )
+                  }
+                  disabled={
+                    processando
+                  }
+                >
+                  {processando
+                    ? "Processando..."
+                    : "Retomar"}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -675,23 +720,18 @@ function Operacao() {
                   ? "Processando..."
                   : "Finalizar produção"}
               </button>
+
             </div>
           </>
         )}
       </div>
 
-      {/*
-        Produções aguardando continuidade.
-
-        Não mostramos essa área enquanto existe
-        um apontamento EM_ANDAMENTO, pois o
-        funcionário já está trabalhando.
-      */}
       {apontamento?.status !==
         "EM_ANDAMENTO" &&
         producoesAguardando.length >
           0 && (
           <div className="operacao-continuidades">
+
             <div className="operacao-continuidades-header">
               <div>
                 <h2>
@@ -708,13 +748,18 @@ function Operacao() {
             </div>
 
             <div className="operacao-continuidades-list">
+
               {producoesAguardando.map(
                 (producao) => (
                   <article
-                    key={producao.id}
+                    key={
+                      producao.id
+                    }
                     className="operacao-continuidade-card"
                   >
+
                     <div className="operacao-continuidade-info">
+
                       <div>
                         <span>
                           OP
@@ -755,6 +800,7 @@ function Operacao() {
                           {" peça(s)"}
                         </strong>
                       </div>
+
                     </div>
 
                     <button
@@ -773,16 +819,20 @@ function Operacao() {
                         ? "Assumindo..."
                         : "Assumir produção"}
                     </button>
+
                   </article>
                 )
               )}
+
             </div>
           </div>
         )}
 
       {modalAberto && (
         <div className="operacao-modal-overlay">
+
           <section className="operacao-modal">
+
             <header className="operacao-modal-header">
               <div>
                 <h2>
@@ -815,7 +865,9 @@ function Operacao() {
                 iniciarApontamento
               }
             >
+
               <div className="operacao-field">
+
                 <label
                   htmlFor="producaoId"
                 >
@@ -827,7 +879,9 @@ function Operacao() {
                   value={
                     producaoId
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     setProducaoId(
                       event.target.value
                     )
@@ -835,8 +889,7 @@ function Operacao() {
                   autoFocus
                 >
                   <option value="">
-                    Selecione uma
-                    produção
+                    Selecione uma produção
                   </option>
 
                   {producoesAbertas.map(
@@ -850,21 +903,13 @@ function Operacao() {
                         }
                       >
                         OP{" "}
-                        {
-                          producao.numeroOp
-                        }
+                        {producao.numeroOp}
                         {" | "}
-                        {
-                          producao.empresa
-                        }
+                        {producao.empresa}
                         {" | "}
-                        {
-                          producao.desenho
-                        }
+                        {producao.desenho}
                         {" | "}
-                        {
-                          producao.quantidade
-                        }
+                        {producao.quantidade}
                         {" peça(s)"}
                       </option>
                     )
@@ -878,9 +923,11 @@ function Operacao() {
                     novas disponíveis.
                   </small>
                 )}
+
               </div>
 
               <div className="operacao-field">
+
                 <label
                   htmlFor="numeroMaquina"
                 >
@@ -892,15 +939,17 @@ function Operacao() {
                   value={
                     numeroMaquina
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     setNumeroMaquina(
                       event.target.value
                     )
                   }
                 >
+
                   <option value="">
-                    Selecione uma
-                    máquina
+                    Selecione uma máquina
                   </option>
 
                   {maquinas.map(
@@ -913,16 +962,13 @@ function Operacao() {
                           maquina.numero
                         }
                       >
-                        {
-                          maquina.numero
-                        }
+                        {maquina.numero}
                         {" - "}
-                        {
-                          maquina.nome
-                        }
+                        {maquina.nome}
                       </option>
                     )
                   )}
+
                 </select>
               </div>
 
@@ -933,6 +979,7 @@ function Operacao() {
               )}
 
               <div className="operacao-modal-actions">
+
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -959,8 +1006,11 @@ function Operacao() {
                     ? "Iniciando..."
                     : "Iniciar"}
                 </button>
+
               </div>
+
             </form>
+
           </section>
         </div>
       )}

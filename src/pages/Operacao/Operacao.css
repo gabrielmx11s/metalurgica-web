@@ -19,12 +19,21 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
+/* =========================
+   CABEÇALHO
+========================= */
+
 .operacao-header {
+  position: relative;
+  margin-bottom: 28px;
+  padding-right: 110px;
+}
+
+.operacao-header-main {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 28px;
 }
 
 .operacao-header h1 {
@@ -37,6 +46,38 @@
   margin-top: 7px;
   margin-bottom: 0;
   color: #666666;
+}
+
+.operacao-logout-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  min-width: 78px;
+  padding: 11px 18px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #b51f2e;
+  color: #ffffff;
+
+  font-size: 0.95rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
+}
+
+.operacao-logout-button:hover {
+  background: #921823;
+}
+
+.operacao-logout-button:active {
+  transform: scale(0.97);
 }
 
 /* =========================
@@ -439,12 +480,22 @@
   }
 
   .operacao-header {
+    padding-right: 0;
+  }
+
+  .operacao-header-main {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .operacao-header .btn {
+  .operacao-header-main .btn {
     width: 100%;
+  }
+
+  .operacao-logout-button {
+    position: static;
+    width: 100%;
+    margin-top: 12px;
   }
 
   .operacao-status-area {

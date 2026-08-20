@@ -13,32 +13,83 @@ function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
     setErro("");
 
     if (!/^\d{4}$/.test(pin)) {
-      setErro("Digite um PIN com exatamente 4 números.");
+      setErro(
+        "Digite um PIN com exatamente 4 números."
+      );
+
       return;
     }
 
     try {
       setCarregando(true);
 
-      const response = await api.post("/auth/login", {
-        pin,
-      });
+      const response =
+        await api.post(
+          "/auth/login",
+          {
+            pin,
+          }
+        );
 
-      localStorage.setItem("token", response.data.token);
+      const dados =
+        response.data;
+
+      localStorage.setItem(
+        "token",
+        dados.token
+      );
 
       localStorage.setItem(
         "funcionario",
         JSON.stringify({
-          id: response.data.funcionarioId,
-          nome: response.data.nome,
-          cargo: response.data.cargo,
+          id: dados.funcionarioId,
+          nome: dados.nome,
+          cargo: dados.cargo,
+          perfil: dados.perfil,
         })
       );
 
-      navigate("/dashboard");
+      if (
+        dados.perfil === "ADMIN"
+      ) {
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          }
+        );
+
+        return;
+      }
+
+      if (
+        dados.perfil === "OPERADOR"
+      ) {
+        navigate(
+          "/operacao",
+          {
+            replace: true,
+          }
+        );
+
+        return;
+      }
+
+      localStorage.removeItem(
+        "token"
+      );
+
+      localStorage.removeItem(
+        "funcionario"
+      );
+
+      setErro(
+        "Perfil de usuário inválido."
+      );
     } catch (error) {
       const mensagem =
         error.response?.data?.erro ||
@@ -55,13 +106,28 @@ function Login() {
     <main className="login-page">
       <section className="login-card">
         <header className="login-header">
-          <h1>TORNESUL</h1>
-          <h2>Sistema de Apontamentos</h2>
-          <p>Digite o PIN do funcionário para acessar.</p>
+          <h1>
+            TORNESUL
+          </h1>
+
+          <h2>
+            Sistema de Apontamentos
+          </h2>
+
+          <p>
+            Digite o PIN do funcionário para acessar.
+          </p>
         </header>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="pin">PIN</label>
+        <form
+          className="login-form"
+          onSubmit={
+            handleSubmit
+          }
+        >
+          <label htmlFor="pin">
+            PIN
+          </label>
 
           <input
             id="pin"
@@ -69,25 +135,40 @@ function Login() {
             inputMode="numeric"
             maxLength={4}
             value={pin}
-            onChange={(event) => {
+            onChange={(
+              event
+            ) => {
               const somenteNumeros =
-                event.target.value.replace(/\D/g, "");
+                event.target.value.replace(
+                  /\D/g,
+                  ""
+                );
 
-              setPin(somenteNumeros);
+              setPin(
+                somenteNumeros
+              );
             }}
             placeholder="••••"
             autoComplete="off"
             autoFocus
           />
 
-          {erro && <p className="login-error">{erro}</p>}
+          {erro && (
+            <p className="login-error">
+              {erro}
+            </p>
+          )}
 
           <button
             className="login-button"
             type="submit"
-            disabled={carregando}
+            disabled={
+              carregando
+            }
           >
-            {carregando ? "Entrando..." : "Entrar"}
+            {carregando
+              ? "Entrando..."
+              : "Entrar"}
           </button>
         </form>
       </section>

@@ -16,7 +16,26 @@ import Maquinas from "../pages/Maquinas/Maquinas";
 import Operacao from "../pages/Operacao/Operacao";
 import Producoes from "../pages/Producoes/Producoes";
 
-function RotaProtegida({
+function obterFuncionario() {
+  const funcionarioSalvo =
+    localStorage.getItem(
+      "funcionario"
+    );
+
+  if (!funcionarioSalvo) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(
+      funcionarioSalvo
+    );
+  } catch {
+    return null;
+  }
+}
+
+function RotaAdmin({
   children,
 }) {
   const token =
@@ -24,7 +43,75 @@ function RotaProtegida({
       "token"
     );
 
-  if (!token) {
+  const funcionario =
+    obterFuncionario();
+
+  if (
+    !token ||
+    !funcionario
+  ) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
+
+  if (
+    funcionario.perfil !==
+    "ADMIN"
+  ) {
+    return (
+      <Navigate
+        to="/operacao"
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
+function RotaOperador({
+  children,
+}) {
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const funcionario =
+    obterFuncionario();
+
+  if (
+    !token ||
+    !funcionario
+  ) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
+
+  if (
+    funcionario.perfil ===
+    "ADMIN"
+  ) {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
+
+  if (
+    funcionario.perfil !==
+    "OPERADOR"
+  ) {
     return (
       <Navigate
         to="/login"
@@ -36,79 +123,140 @@ function RotaProtegida({
   return children;
 }
 
+function RedirecionamentoInicial() {
+  const token =
+    localStorage.getItem(
+      "token"
+    );
+
+  const funcionario =
+    obterFuncionario();
+
+  if (
+    !token ||
+    !funcionario
+  ) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
+
+  if (
+    funcionario.perfil ===
+    "ADMIN"
+  ) {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
+
+  if (
+    funcionario.perfil ===
+    "OPERADOR"
+  ) {
+    return (
+      <Navigate
+        to="/operacao"
+        replace
+      />
+    );
+  }
+
+  return (
+    <Navigate
+      to="/login"
+      replace
+    />
+  );
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            <Login />
+          }
         />
 
         <Route
           path="/operacao"
           element={
-            <RotaProtegida>
+            <RotaOperador>
               <Operacao />
-            </RotaProtegida>
+            </RotaOperador>
           }
         />
 
         <Route
           element={
-            <RotaProtegida>
+            <RotaAdmin>
               <Layout />
-            </RotaProtegida>
+            </RotaAdmin>
           }
         >
           <Route
             path="/dashboard"
-            element={<Dashboard />}
+            element={
+              <Dashboard />
+            }
           />
 
           <Route
             path="/funcionarios"
-            element={<Funcionarios />}
+            element={
+              <Funcionarios />
+            }
           />
 
           <Route
             path="/maquinas"
-            element={<Maquinas />}
+            element={
+              <Maquinas />
+            }
           />
 
           <Route
             path="/producoes"
-            element={<Producoes />}
+            element={
+              <Producoes />
+            }
           />
 
           <Route
             path="/apontamentos"
-            element={<Apontamentos />}
+            element={
+              <Apontamentos />
+            }
           />
 
           <Route
             path="/horarios"
-            element={<Horarios />}
+            element={
+              <Horarios />
+            }
           />
         </Route>
 
         <Route
           path="/"
           element={
-            <Navigate
-              to="/login"
-              replace
-            />
+            <RedirecionamentoInicial />
           }
         />
 
         <Route
           path="*"
           element={
-            <Navigate
-              to="/login"
-              replace
-            />
+            <RedirecionamentoInicial />
           }
         />
       </Routes>
